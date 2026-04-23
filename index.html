@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Couch to 5K Timer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <h1>Couch to 5K</h1>
+      <p class="tagline">Run. Walk. Repeat.</p>
+    </header>
+
+    <section id="setup" class="screen">
+      <div class="card">
+        <h2>Configure your workout</h2>
+
+        <div class="field">
+          <label for="totalMinutes">Total workout length (minutes)</label>
+          <input type="number" id="totalMinutes" min="1" max="120" value="30" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="runMinutes">Run</label>
+            <div class="time-inputs">
+              <input type="number" id="runMinutes" min="0" max="60" value="1" />
+              <span>min</span>
+              <input type="number" id="runSeconds" min="0" max="59" value="0" />
+              <span>sec</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="walkMinutes">Walk</label>
+            <div class="time-inputs">
+              <input type="number" id="walkMinutes" min="0" max="60" value="1" />
+              <span>min</span>
+              <input type="number" id="walkSeconds" min="0" max="59" value="30" />
+              <span>sec</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="preview" class="preview">
+          <div class="preview-row">
+            <span class="preview-label">Sets</span>
+            <span id="previewSets" class="preview-value">—</span>
+          </div>
+          <div class="preview-row">
+            <span class="preview-label">Workout pattern</span>
+            <span id="previewPattern" class="preview-value">—</span>
+          </div>
+          <div class="preview-row">
+            <span class="preview-label">Leftover time</span>
+            <span id="previewLeftover" class="preview-value">—</span>
+          </div>
+        </div>
+
+        <button id="startBtn" class="primary">Start workout</button>
+      </div>
+    </section>
+
+    <section id="workout" class="screen hidden">
+      <div class="card workout-card">
+        <div class="phase-banner" id="phaseBanner">
+          <span id="phaseLabel">RUN</span>
+        </div>
+
+        <div class="timer" id="phaseTimer">00:00</div>
+        <div class="timer-label">phase time remaining</div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value" id="totalTimer">00:00</div>
+            <div class="stat-label">total remaining</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="setCounter">1 / 1</div>
+            <div class="stat-label">set</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="pauseBtn" class="secondary">Pause</button>
+          <button id="resetBtn" class="danger">Reset</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
