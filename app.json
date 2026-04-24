@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Couch to 5K",
+    "slug": "couchto5k",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.couchto5k.app"
+    },
+    "android": {
+      "package": "com.couchto5k.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a"
+      }
+    }
+  }
+}

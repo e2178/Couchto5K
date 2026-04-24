@@ -1,0 +1,26 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.DS_Store
+
+# Native builds
+/ios/Pods/
+/android/build/
+/android/app/build/
+/android/.gradle/
+*.apk
+*.aab
+*.keystore
+!debug.keystore
+
+# Environment
+.env
+.env.*
+
+# Misc
+npm-debug.*
+yarn-error.log
+*.log
+.idea/
+.vscode/
