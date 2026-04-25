@@ -3,95 +3,72 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0f172a" />
-  <title>Couch to 5K Timer</title>
+  <meta name="theme-color" content="#111827" />
+  <title>Couch to 5K</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="app">
     <header class="app-header">
-      <h1>Couch to 5K</h1>
-      <p class="tagline">Run. Walk. Repeat.</p>
+      <div class="title-block">
+        <h1>Couch to 5K</h1>
+        <p class="tagline">Run. Walk. Repeat.</p>
+      </div>
+      <button id="settingsBtn" class="icon-btn" aria-label="Settings">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+             stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      </button>
     </header>
 
-    <section id="setup" class="screen">
-      <div class="card">
-        <h2>Configure your workout</h2>
-
-        <div class="field">
-          <label for="totalMinutes">Total workout length (minutes)</label>
-          <input type="number" id="totalMinutes" min="1" max="120" value="30" />
-        </div>
-
-        <div class="field-row">
-          <div class="field">
-            <label for="runMinutes">Run</label>
-            <div class="time-inputs">
-              <input type="number" id="runMinutes" min="0" max="60" value="1" />
-              <span>min</span>
-              <input type="number" id="runSeconds" min="0" max="59" value="0" />
-              <span>sec</span>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="walkMinutes">Walk</label>
-            <div class="time-inputs">
-              <input type="number" id="walkMinutes" min="0" max="60" value="1" />
-              <span>min</span>
-              <input type="number" id="walkSeconds" min="0" max="59" value="30" />
-              <span>sec</span>
-            </div>
-          </div>
-        </div>
-
-        <div id="preview" class="preview">
-          <div class="preview-row">
-            <span class="preview-label">Sets</span>
-            <span id="previewSets" class="preview-value">—</span>
-          </div>
-          <div class="preview-row">
-            <span class="preview-label">Workout pattern</span>
-            <span id="previewPattern" class="preview-value">—</span>
-          </div>
-          <div class="preview-row">
-            <span class="preview-label">Leftover time</span>
-            <span id="previewLeftover" class="preview-value">—</span>
-          </div>
-        </div>
-
-        <button id="startBtn" class="primary">Start workout</button>
-      </div>
-    </section>
-
-    <section id="workout" class="screen hidden">
-      <div class="card workout-card">
-        <div class="phase-banner" id="phaseBanner">
-          <span id="phaseLabel">RUN</span>
-        </div>
-
-        <div class="timer" id="phaseTimer">00:00</div>
-        <div class="timer-label">phase time remaining</div>
-
-        <div class="stats">
-          <div class="stat">
-            <div class="stat-value" id="totalTimer">00:00</div>
-            <div class="stat-label">total remaining</div>
-          </div>
-          <div class="stat">
-            <div class="stat-value" id="setCounter">1 / 1</div>
-            <div class="stat-label">set</div>
-          </div>
-        </div>
-
-        <div class="controls">
-          <button id="pauseBtn" class="secondary">Pause</button>
-          <button id="resetBtn" class="danger">Reset</button>
-        </div>
-      </div>
-    </section>
+    <section id="programScreen" class="screen"></section>
+    <section id="workoutScreen" class="screen hidden"></section>
+    <section id="historyScreen" class="screen hidden"></section>
+    <section id="settingsScreen" class="screen hidden"></section>
   </main>
 
-  <script src="app.js"></script>
+  <nav class="tab-bar">
+    <button class="tab" data-tab="program" aria-label="Program">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </svg>
+      <span>Program</span>
+    </button>
+    <button class="tab" data-tab="workout" aria-label="Workout">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3" />
+      </svg>
+      <span>Workout</span>
+    </button>
+    <button class="tab" data-tab="history" aria-label="History">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+           stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+        <path d="M3 3v5h5" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+      <span>History</span>
+    </button>
+  </nav>
+
+  <div id="modalRoot" class="modal-root hidden"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/screens.js"></script>
+  <script src="js/workout.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
