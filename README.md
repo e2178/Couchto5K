@@ -1,29 +1,35 @@
 # Couchto5K
 
-A simple interval timer that follows the Couch to 5K methodology.
-
-Set a total workout length (default 30 minutes), then pick your run and walk
-durations. The app calculates how many run/walk sets fit in the total time,
-then counts down each interval and alternates between the two until time runs
-out. A tone plays at every phase change.
+A web-based Couch to 5K trainer. Walks you through the standard 9-week C25K
+program — run/walk intervals at the right ratio for each session — with audio
+cues at every phase change, history tracking, and configurable settings.
 
 ## Usage
 
 Open `index.html` in any modern browser. No build step, no dependencies.
 
-- **Total workout length**: overall session in minutes (e.g. 30)
-- **Run**: duration of each run interval (min + sec)
-- **Walk**: duration of each walk interval (min + sec)
+The app has four sections accessible via the bottom tab bar (and gear icon):
 
-The preview shows how many full sets fit and any leftover time that will be
-trimmed (a partial set is never started). Press **Start workout** to begin.
+- **Program** — the full 9-week plan, grouped into 3 phases. Tap a week to
+  expand it; tap a day's *Start* button to begin that session.
+- **Workout** — the active session screen. Auto-selects the next incomplete
+  day. Big phase timer, segment progress bar, and a *Finish early* option
+  that logs a partial run.
+- **History** — every logged run with pace, distance, and duration. Stats
+  bar at the top (total runs, average pace, total distance). *Log run
+  manually* button at the bottom.
+- **Settings** — theme, audio tones, vibration, units (km/mi), auto-log
+  toggle, rest day reminder time, plus *Reset progress* and *Clear history*.
 
-## How the timing works
+Progress is stored in the browser via `localStorage`.
 
-```
-sets     = floor(total_seconds / (run_seconds + walk_seconds))
-workout  = sets × (run + walk)
-leftover = total - workout    // trimmed so you always finish on a full set
-```
+## Files
 
-The sequence is always `run → walk → run → walk → ...`, repeated `sets` times.
+- `index.html` — markup and tab structure
+- `styles.css` — design tokens (purple/pink palette) and component styles
+- `js/data.js` — the C25K program data
+- `js/store.js` — completion, history, and settings persistence
+- `js/utils.js` — time/pace formatting, audio tones, vibration
+- `js/screens.js` — render functions for each screen + log run modal
+- `js/workout.js` — workout timer state machine
+- `js/main.js` — bootstrap and tab navigation
