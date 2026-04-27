@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radii, spacing, typography } from '../theme';
 import { Button } from './Button';
-import { addRun } from '../stores/history';
+import { addRun } from '../store';
 import { computePace } from '../utils/pace';
 
 type Props = {

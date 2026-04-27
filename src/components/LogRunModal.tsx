@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { Modal, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radii, spacing, typography } from '../theme';
 import { Button } from './Button';
-import { addRun } from '../stores/history';
+import { addRun, settings } from '../store';
 import { computePace } from '../utils/pace';
 import { formatTimeLoose } from '../utils/time';
-import { settingsStore } from '../stores/settings';
 
 type Props = {
   visible: boolean;
@@ -51,7 +50,7 @@ export const LogRunModal: React.FC<Props> = ({
     onClose(false);
   };
 
-  if (!settingsStore.get().autoLogEnabled) {
+  if (!settings.get().autoLogEnabled) {
     if (visible) onClose(false);
     return null;
   }

@@ -1,29 +1,21 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { NavigationContainer, DarkTheme, useNavigation } from '@react-navigation/native';
-import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { colors, spacing, typography } from '../theme';
+import { colors } from '../theme';
 import { ProgramScreen } from '../screens/ProgramScreen';
 import { WorkoutScreen } from '../screens/WorkoutScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import type { SessionContext } from '../types';
 
-export type TabParamList = {
-  Program: undefined;
-  Workout: undefined;
-  History: undefined;
-};
+type RootStack = { Tabs: undefined; Settings: undefined };
+type Tabs = { Program: undefined; Workout: undefined; History: undefined };
 
-export type RootStackParamList = {
-  Tabs: undefined;
-  Settings: undefined;
-};
-
-const Tab = createBottomTabNavigator<TabParamList>();
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<RootStack>();
+const Tab = createBottomTabNavigator<Tabs>();
 
 const navTheme = {
   ...DarkTheme,
@@ -37,66 +29,53 @@ const navTheme = {
   },
 };
 
+const TAB_GLYPHS: Record<keyof Tabs, string> = {
+  Program: '▦',
+  Workout: '▶',
+  History: '⟳',
+};
+
 const SettingsButton: React.FC = () => {
   const navigation = useNavigation<any>();
   return (
     <Pressable
       onPress={() => navigation.navigate('Settings')}
-      style={({ pressed }) => [styles.gearBtn, pressed && { opacity: 0.7 }]}
-      accessibilityLabel="Settings"
+      hitSlop={8}
+      style={{ paddingHorizontal: 12 }}
     >
-      <Text style={styles.gearGlyph}>⚙</Text>
+      <Text style={{ fontSize: 22, color: colors.textSecondary }}>⚙</Text>
     </Pressable>
   );
 };
 
-const TabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => (
-  <View style={styles.tabBar}>
-    {state.routes.map((route, index) => {
-      const focused = state.index === index;
-      const glyph = TAB_GLYPH[route.name as keyof typeof TAB_GLYPH] ?? '•';
-      return (
-        <Pressable
-          key={route.key}
-          onPress={() => navigation.navigate(route.name as any)}
-          style={styles.tabBtn}
-        >
-          <Text style={[styles.tabGlyph, focused && styles.tabGlyphActive]}>
-            {glyph}
-          </Text>
-          <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-            {route.name}
-          </Text>
-        </Pressable>
-      );
-    })}
-  </View>
-);
-
-const TAB_GLYPH = {
-  Program: '▦',
-  Workout: '▶',
-  History: '⟳',
-} as const;
-
-const Tabs: React.FC<{
+const TabsNav: React.FC<{
   pendingCtx: SessionContext | null;
   onPendingConsumed: () => void;
-  onStartFromProgram: (ctx: SessionContext) => void;
+  onStart: (ctx: SessionContext) => void;
   onRunLogged: () => void;
-}> = ({ pendingCtx, onPendingConsumed, onStartFromProgram, onRunLogged }) => (
+}> = ({ pendingCtx, onPendingConsumed, onStart, onRunLogged }) => (
   <Tab.Navigator
-    tabBar={(props) => <TabBar {...props} />}
-    screenOptions={{
+    screenOptions={({ route }) => ({
       headerStyle: { backgroundColor: colors.bg },
-      headerTintColor: colors.textPrimary,
-      headerTitleStyle: { fontWeight: '700' },
-      headerRight: () => <SettingsButton />,
+      headerTitleStyle: { color: colors.textPrimary, fontWeight: '700' },
       headerShadowVisible: false,
-    }}
+      headerRight: () => <SettingsButton />,
+      tabBarStyle: {
+        backgroundColor: colors.bgElevated,
+        borderTopColor: colors.bgSubtle,
+      },
+      tabBarActiveTintColor: colors.run,
+      tabBarInactiveTintColor: colors.textTertiary,
+      tabBarIcon: ({ color }) => (
+        <Text style={{ fontSize: 18, color }}>
+          {TAB_GLYPHS[route.name as keyof Tabs]}
+        </Text>
+      ),
+      tabBarLabelStyle: { fontWeight: '600', fontSize: 11 },
+    })}
   >
     <Tab.Screen name="Program">
-      {() => <ProgramScreen onStart={onStartFromProgram} />}
+      {() => <ProgramScreen onStart={onStart} />}
     </Tab.Screen>
     <Tab.Screen name="Workout">
       {() => (
@@ -107,9 +86,7 @@ const Tabs: React.FC<{
         />
       )}
     </Tab.Screen>
-    <Tab.Screen name="History">
-      {() => <HistoryScreen />}
-    </Tab.Screen>
+    <Tab.Screen name="History" component={HistoryScreen} />
   </Tab.Navigator>
 );
 
@@ -117,31 +94,28 @@ export const RootNavigator: React.FC = () => {
   const [pendingCtx, setPendingCtx] = useState<SessionContext | null>(null);
   const navRef = React.useRef<any>(null);
 
-  const handleStartFromProgram = (ctx: SessionContext) => {
-    setPendingCtx(ctx);
-    navRef.current?.navigate('Tabs', { screen: 'Workout' });
-  };
-
-  const handleRunLogged = () => {
-    navRef.current?.navigate('Tabs', { screen: 'History' });
-  };
-
   return (
     <NavigationContainer ref={navRef} theme={navTheme}>
       <Stack.Navigator
         screenOptions={{
           headerStyle: { backgroundColor: colors.bg },
-          headerTintColor: colors.textPrimary,
+          headerTitleStyle: { color: colors.textPrimary, fontWeight: '700' },
           headerShadowVisible: false,
+          headerTintColor: colors.textPrimary,
         }}
       >
         <Stack.Screen name="Tabs" options={{ headerShown: false }}>
           {() => (
-            <Tabs
+            <TabsNav
               pendingCtx={pendingCtx}
               onPendingConsumed={() => setPendingCtx(null)}
-              onStartFromProgram={handleStartFromProgram}
-              onRunLogged={handleRunLogged}
+              onStart={(ctx) => {
+                setPendingCtx(ctx);
+                navRef.current?.navigate('Tabs', { screen: 'Workout' });
+              }}
+              onRunLogged={() =>
+                navRef.current?.navigate('Tabs', { screen: 'History' })
+              }
             />
           )}
         </Stack.Screen>
@@ -154,22 +128,3 @@ export const RootNavigator: React.FC = () => {
     </NavigationContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  gearBtn: { padding: spacing.sm, marginRight: spacing.xs },
-  gearGlyph: { fontSize: 20, color: colors.textSecondary },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: colors.bgElevated,
-    borderTopWidth: 1, borderTopColor: colors.bgSubtle,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.md,
-  },
-  tabBtn: {
-    flex: 1, alignItems: 'center', gap: 2,
-  },
-  tabGlyph: { fontSize: 20, color: colors.textTertiary },
-  tabGlyphActive: { color: colors.run },
-  tabLabel: { ...typography.tiny, color: colors.textTertiary, fontWeight: '600' },
-  tabLabelActive: { color: colors.run },
-});

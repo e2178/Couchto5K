@@ -1,7 +1,7 @@
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import type { SegmentKind } from '../types';
-import { settingsStore } from '../stores/settings';
+import { settings } from '../store';
 
 const TONE_SOURCES = {
   run:      require('../../assets/tones/run.wav'),
@@ -30,14 +30,14 @@ const ensureAudioMode = async () => {
 };
 
 export const playTone = async (kind: ToneKind): Promise<void> => {
-  const settings = settingsStore.get();
-  if (!settings.audioEnabled) return;
+  const s = settings.get();
+  if (!s.audioEnabled) return;
   await ensureAudioMode();
   try {
-    const { sound } = await Audio.Sound.createAsync(
-      TONE_SOURCES[kind],
-      { volume: Math.max(0, Math.min(1, settings.audioVolume)), shouldPlay: true },
-    );
+    const { sound } = await Audio.Sound.createAsync(TONE_SOURCES[kind], {
+      volume: Math.max(0, Math.min(1, s.audioVolume)),
+      shouldPlay: true,
+    });
     sound.setOnPlaybackStatusUpdate((status) => {
       if ('didJustFinish' in status && status.didJustFinish) {
         sound.unloadAsync().catch(() => undefined);
@@ -48,27 +48,23 @@ export const playTone = async (kind: ToneKind): Promise<void> => {
   }
 };
 
-export const buzz = (intensity: 'light' | 'medium' | 'heavy' = 'medium'): void => {
-  if (!settingsStore.get().vibrationEnabled) return;
-  const map = {
-    light:  Haptics.ImpactFeedbackStyle.Light,
-    medium: Haptics.ImpactFeedbackStyle.Medium,
-    heavy:  Haptics.ImpactFeedbackStyle.Heavy,
-  };
-  Haptics.impactAsync(map[intensity]).catch(() => undefined);
-};
-
 export const phaseStartCue = (kind: SegmentKind | 'done'): void => {
   if (kind === 'run') {
     playTone('run');
-    buzz('heavy');
+    if (settings.get().vibrationEnabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => undefined);
+    }
   } else if (kind === 'walk') {
     playTone('walk');
-    buzz('medium');
+    if (settings.get().vibrationEnabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+    }
   } else {
     playTone('complete');
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-      () => undefined,
-    );
+    if (settings.get().vibrationEnabled) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
+        () => undefined,
+      );
+    }
   }
 };

@@ -3,67 +3,55 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing, typography } from '../theme';
 import { Button } from '../components/Button';
 import { ManualLogModal } from '../components/ManualLogModal';
-import { historyStore } from '../stores/history';
-import { settingsStore } from '../stores/settings';
+import { history, settings } from '../store';
 import {
   formatPace, formatPaceShort, formatDistance, totalDistance,
 } from '../utils/pace';
 import { formatTimeLoose, relativeDate } from '../utils/time';
 
 export const HistoryScreen: React.FC = () => {
-  const runs = historyStore.use();
-  const settings = settingsStore.use();
+  const runs = history.use();
+  const s = settings.use();
   const [manualOpen, setManualOpen] = useState(false);
 
-  const totalKm = runs.reduce((s, r) => s + r.distanceKm, 0);
+  const totalKm = runs.reduce((acc, r) => acc + r.distanceKm, 0);
   const avgPace = runs.length
-    ? Math.round(runs.reduce((s, r) => s + r.paceSecondsPerKm, 0) / runs.length)
+    ? Math.round(runs.reduce((acc, r) => acc + r.paceSecondsPerKm, 0) / runs.length)
     : 0;
+  const unit = s.units === 'mi' ? 'mi' : 'km';
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.statsRow}>
-        <View style={styles.tile}>
-          <Text style={styles.tileValue}>{runs.length}</Text>
-          <Text style={styles.tileLabel}>Runs</Text>
-        </View>
-        <View style={styles.tile}>
-          <Text style={styles.tileValue}>
-            {avgPace ? formatPaceShort(avgPace, settings.units) : '—'}
-          </Text>
-          <Text style={styles.tileLabel}>
-            {settings.units === 'mi' ? 'Avg /mi' : 'Avg /km'}
-          </Text>
-        </View>
-        <View style={styles.tile}>
-          <Text style={styles.tileValue}>{totalDistance(totalKm, settings.units)}</Text>
-          <Text style={styles.tileLabel}>
-            {settings.units === 'mi' ? 'Total mi' : 'Total km'}
-          </Text>
-        </View>
+        <Tile value={String(runs.length)} label="Runs" />
+        <Tile
+          value={avgPace ? formatPaceShort(avgPace, s.units) : '—'}
+          label={`Avg /${unit}`}
+        />
+        <Tile value={totalDistance(totalKm, s.units)} label={`Total ${unit}`} />
       </View>
 
       {runs.length === 0 ? (
-        <View style={styles.emptyCard}>
+        <View style={styles.empty}>
           <Text style={styles.emptyTitle}>No runs logged yet.</Text>
           <Text style={styles.emptyBody}>
             Complete a session or log one manually below.
           </Text>
         </View>
       ) : (
-        <View style={styles.list}>
-          {runs.map((run) => {
-            const labelText = run.title
-              ? `${run.weekLabel ? run.weekLabel + ' · ' : ''}${run.title}`
-              : run.weekLabel || (run.source === 'manual' ? 'Manual run' : 'Run');
+        <View style={{ gap: spacing.sm }}>
+          {runs.map((r) => {
+            const label = r.title
+              ? `${r.weekLabel ? r.weekLabel + ' · ' : ''}${r.title}`
+              : r.weekLabel || (r.source === 'manual' ? 'Manual run' : 'Run');
             return (
-              <View key={run.id} style={styles.row}>
+              <View key={r.id} style={styles.row}>
                 <View style={styles.rowTop}>
-                  <Text style={styles.rowLabel}>{labelText}</Text>
-                  <Text style={styles.rowPace}>{formatPace(run.paceSecondsPerKm, settings.units)}</Text>
+                  <Text style={styles.rowLabel}>{label}</Text>
+                  <Text style={styles.rowPace}>{formatPace(r.paceSecondsPerKm, s.units)}</Text>
                 </View>
                 <Text style={styles.rowSub}>
-                  {formatDistance(run.distanceKm, settings.units)} · {formatTimeLoose(run.durationSeconds)} · {relativeDate(run.date)}
+                  {formatDistance(r.distanceKm, s.units)} · {formatTimeLoose(r.durationSeconds)} · {relativeDate(r.date)}
                 </Text>
               </View>
             );
@@ -84,41 +72,40 @@ export const HistoryScreen: React.FC = () => {
   );
 };
 
+const Tile: React.FC<{ value: string; label: string }> = ({ value, label }) => (
+  <View style={styles.tile}>
+    <Text style={styles.tileValue}>{value}</Text>
+    <Text style={styles.tileLabel}>{label}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
   container: { padding: spacing.lg, paddingBottom: 40, gap: spacing.md },
   statsRow: { flexDirection: 'row', gap: spacing.sm },
   tile: {
-    flex: 1,
-    backgroundColor: colors.bgElevated,
-    borderRadius: radii.md,
-    borderWidth: 1, borderColor: colors.bgSubtle,
-    padding: spacing.md,
-    alignItems: 'center',
+    flex: 1, backgroundColor: colors.bgElevated,
+    borderRadius: radii.md, borderWidth: 1, borderColor: colors.bgSubtle,
+    padding: spacing.md, alignItems: 'center',
   },
   tileValue: { ...typography.h2, color: colors.textPrimary, fontVariant: ['tabular-nums'] },
   tileLabel: {
     ...typography.tiny, color: colors.textSecondary,
     textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 4,
   },
-  emptyCard: {
+  empty: {
     backgroundColor: colors.bgElevated,
-    borderRadius: radii.md,
-    borderWidth: 1, borderColor: colors.bgSubtle,
-    padding: spacing.xl,
-    alignItems: 'center',
+    borderRadius: radii.md, borderWidth: 1, borderColor: colors.bgSubtle,
+    padding: spacing.xl, alignItems: 'center',
   },
   emptyTitle: { ...typography.body, color: colors.textPrimary, marginBottom: 4 },
-  emptyBody:  { ...typography.small, color: colors.textSecondary, textAlign: 'center' },
-  list: { gap: spacing.sm },
+  emptyBody: { ...typography.small, color: colors.textSecondary, textAlign: 'center' },
   row: {
     backgroundColor: colors.bgElevated,
-    borderRadius: radii.md,
-    borderWidth: 1, borderColor: colors.bgSubtle,
-    padding: spacing.md,
-    gap: 4,
+    borderRadius: radii.md, borderWidth: 1, borderColor: colors.bgSubtle,
+    padding: spacing.md, gap: 4,
   },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   rowLabel: { ...typography.bodyStrong, color: colors.textPrimary, flex: 1, marginRight: spacing.sm },
-  rowPace:  { ...typography.bodyStrong, color: colors.run, fontVariant: ['tabular-nums'] },
-  rowSub:   { ...typography.tiny, color: colors.textSecondary },
+  rowPace: { ...typography.bodyStrong, color: colors.run, fontVariant: ['tabular-nums'] },
+  rowSub: { ...typography.tiny, color: colors.textSecondary },
 });
