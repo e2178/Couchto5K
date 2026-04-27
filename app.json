@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -25,8 +24,12 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#111827"
-      },
-      "edgeToEdgeEnabled": true
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "382643d0-9cd8-4f2c-b920-8925a688aa23"
+      }
     }
   }
 }

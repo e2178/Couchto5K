@@ -1,3 +1,3 @@
 /* Bumped each push; visible in Settings → Build N. If the value here matches
  * what you see in the app, you are running the latest bundle. */
-export const BUILD_TAG = '20260427-1147-expo-audio';
+export const BUILD_TAG = '20260427-2144-eas-fix';
