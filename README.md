@@ -5,20 +5,58 @@ An Expo / React Native Couch to 5K trainer. Walks you through the standard
 with audio cues at every phase change, history tracking, and configurable
 settings.
 
-## Run on Expo Go
+## Run on Expo Go (development)
 
 ```bash
 npm install
 npx expo start
 ```
 
-Scan the QR code with Expo Go on iOS/Android. Requires Expo Go for SDK 54.
+Scan the QR code with Expo Go on iOS/Android. Requires Expo Go for SDK 55.
 
 If your phone isn't on the same Wi-Fi:
 
 ```bash
 npx expo start --tunnel
 ```
+
+## Build a standalone Android APK (offline use)
+
+The app has zero network calls — all data lives in `AsyncStorage` and the
+audio tones are bundled, so once installed an APK runs entirely offline.
+
+EAS Build (Expo's free cloud builder) is the simplest way to produce one:
+
+```bash
+# 1. Log in (free Expo account at expo.dev)
+npx eas-cli@latest login
+
+# 2. Link the project (one-time; assigns an EAS project id)
+npx eas-cli@latest init
+
+# 3. Build the APK on Expo's servers (~10-20 min)
+npx eas-cli@latest build --platform android --profile preview
+```
+
+When the build finishes EAS prints a URL. Open it on your Android phone,
+download the `.apk`, then install it (Android may ask you to allow
+"install from unknown sources" for your browser the first time).
+
+The `preview` profile in `eas.json` produces an installable APK suitable
+for sideloading. The `production` profile produces an `.aab` (Android App
+Bundle) for the Play Store; use `--profile production` instead if that's
+what you want.
+
+### Build it locally instead
+
+If you'd rather not use EAS, you can build locally with Android Studio +
+JDK 17 + Android SDK installed:
+
+```bash
+npx expo run:android --variant release
+```
+
+The release APK lands in `android/app/build/outputs/apk/release/`.
 
 ## App structure
 
