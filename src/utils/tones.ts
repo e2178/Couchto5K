@@ -1,4 +1,8 @@
-import { Audio } from 'expo-av';
+import {
+  createAudioPlayer,
+  setAudioModeAsync,
+  type AudioPlayer,
+} from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import type { SegmentKind } from '../types';
 import { settings } from '../store';
@@ -11,22 +15,32 @@ const TONE_SOURCES = {
 
 type ToneKind = keyof typeof TONE_SOURCES;
 
-let audioInitialized = false;
+const players: Partial<Record<ToneKind, AudioPlayer>> = {};
+let audioModeInitialized = false;
 
 const ensureAudioMode = async () => {
-  if (audioInitialized) return;
+  if (audioModeInitialized) return;
+  audioModeInitialized = true;
   try {
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
-    });
-    audioInitialized = true;
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: false,
+      interruptionMode: 'mixWithOthers',
+      shouldRouteThroughEarpiece: false,
+      allowsRecording: false,
+    } as Parameters<typeof setAudioModeAsync>[0]);
   } catch {
-    /* ignore */
+    /* non-fatal */
   }
+};
+
+const getPlayer = (kind: ToneKind): AudioPlayer => {
+  let p = players[kind];
+  if (!p) {
+    p = createAudioPlayer(TONE_SOURCES[kind]);
+    players[kind] = p;
+  }
+  return p;
 };
 
 export const playTone = async (kind: ToneKind): Promise<void> => {
@@ -34,34 +48,30 @@ export const playTone = async (kind: ToneKind): Promise<void> => {
   if (!s.audioEnabled) return;
   await ensureAudioMode();
   try {
-    const { sound } = await Audio.Sound.createAsync(TONE_SOURCES[kind], {
-      volume: Math.max(0, Math.min(1, s.audioVolume)),
-      shouldPlay: true,
-    });
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if ('didJustFinish' in status && status.didJustFinish) {
-        sound.unloadAsync().catch(() => undefined);
-      }
-    });
+    const player = getPlayer(kind);
+    player.volume = Math.max(0, Math.min(1, s.audioVolume));
+    await player.seekTo(0);
+    player.play();
   } catch {
-    /* ignore audio errors silently */
+    /* ignore audio errors */
   }
 };
 
 export const phaseStartCue = (kind: SegmentKind | 'done'): void => {
+  const vibrationOn = settings.get().vibrationEnabled;
   if (kind === 'run') {
     playTone('run');
-    if (settings.get().vibrationEnabled) {
+    if (vibrationOn) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => undefined);
     }
   } else if (kind === 'walk') {
     playTone('walk');
-    if (settings.get().vibrationEnabled) {
+    if (vibrationOn) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
     }
   } else {
     playTone('complete');
-    if (settings.get().vibrationEnabled) {
+    if (vibrationOn) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
         () => undefined,
       );
