@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing, typography } from '../theme';
 import { PROGRAM, dayId, dayLabel, totalSeconds } from '../data/program';
-import { completion, findNextSession, isDone, weekStatus } from '../store';
+import {
+  completion, findNextSession, isDone, setDayDone, setWeekDone, weekStatus,
+} from '../store';
 import { SegmentBar } from '../components/SegmentBar';
 import { Button } from '../components/Button';
+import { Checkbox } from '../components/Checkbox';
 import { formatTimeLoose } from '../utils/time';
 import type { SessionContext } from '../types';
 
@@ -27,30 +30,34 @@ export const ProgramScreen: React.FC<Props> = ({ onStart }) => {
 
           {phase.weeks.map((w) => {
             const status = weekStatus(w);
-            const done = status.done === status.total;
+            const allDone = status.done === status.total;
+            const someDone = status.done > 0 && !allDone;
             const expanded =
-              w.week in override ? override[w.week] : !done && w.week === nextWeek;
+              w.week in override ? override[w.week] : !allDone && w.week === nextWeek;
 
             return (
-              <View key={w.week} style={[styles.weekCard, done && { opacity: 0.45 }]}>
-                <Pressable
-                  onPress={() => setOverride((p) => ({ ...p, [w.week]: !expanded }))}
-                  style={styles.weekHeader}
-                >
-                  <View>
-                    <Text style={styles.weekTitle}>Week {w.week}</Text>
-                    <Text style={styles.weekMeta}>
-                      {status.done} / {status.total} runs complete
-                    </Text>
+              <View key={w.week} style={[styles.weekCard, allDone && { opacity: 0.55 }]}>
+                <View style={styles.weekHeader}>
+                  <View style={styles.weekHeaderLeft}>
+                    <Checkbox
+                      value={allDone}
+                      partial={someDone}
+                      onChange={(v) => setWeekDone(w, v)}
+                    />
                   </View>
-                  {done ? (
-                    <View style={styles.checkBadge}>
-                      <Text style={styles.checkGlyph}>✓</Text>
+                  <Pressable
+                    onPress={() => setOverride((p) => ({ ...p, [w.week]: !expanded }))}
+                    style={styles.weekHeaderTap}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.weekTitle}>Week {w.week}</Text>
+                      <Text style={styles.weekMeta}>
+                        {status.done} / {status.total} runs complete
+                      </Text>
                     </View>
-                  ) : (
                     <Text style={styles.chev}>{expanded ? '⌃' : '⌄'}</Text>
-                  )}
-                </Pressable>
+                  </Pressable>
+                </View>
 
                 {expanded && (
                   <View style={styles.weekBody}>
@@ -61,6 +68,10 @@ export const ProgramScreen: React.FC<Props> = ({ onStart }) => {
                       return (
                         <View key={di} style={styles.dayRow}>
                           <View style={styles.dayHeader}>
+                            <Checkbox
+                              value={dayDone}
+                              onChange={(v) => setDayDone(id, v)}
+                            />
                             <View style={{ flex: 1 }}>
                               <View style={styles.dayTitleRow}>
                                 <Text style={styles.dayTitle}>
@@ -72,9 +83,7 @@ export const ProgramScreen: React.FC<Props> = ({ onStart }) => {
                               </View>
                               <Text style={styles.dayDesc}>{day.desc}</Text>
                             </View>
-                            {dayDone ? (
-                              <Text style={styles.doneText}>✓ Done</Text>
-                            ) : (
+                            {!dayDone && (
                               <Button
                                 label="Start"
                                 size="sm"
@@ -136,22 +145,20 @@ const styles = StyleSheet.create({
   },
   weekHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: spacing.md,
+    paddingLeft: spacing.md,
+  },
+  weekHeaderLeft: { paddingRight: spacing.md },
+  weekHeaderTap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingRight: spacing.md,
   },
   weekTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
   weekMeta: { ...typography.small, color: colors.textSecondary, marginTop: 2 },
-  chev: { fontSize: 20, color: colors.textSecondary },
-  checkBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkGlyph: { color: colors.bg, fontSize: 14, fontWeight: '700' },
+  chev: { fontSize: 20, color: colors.textSecondary, marginLeft: spacing.sm },
   weekBody: { padding: spacing.md, paddingTop: 0, gap: spacing.sm },
   dayRow: {
     backgroundColor: colors.bg,
@@ -166,7 +173,6 @@ const styles = StyleSheet.create({
   dayTitle: { ...typography.bodyStrong, color: colors.textPrimary },
   dayTotal: { ...typography.tiny, color: colors.textTertiary },
   dayDesc: { ...typography.small, color: colors.textSecondary, marginTop: 2 },
-  doneText: { color: colors.success, ...typography.smallStrong },
   legend: { flexDirection: 'row', gap: spacing.md, paddingTop: spacing.xs },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendSwatch: { width: 10, height: 10, borderRadius: 2 },

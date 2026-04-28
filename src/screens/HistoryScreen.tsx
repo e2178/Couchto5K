@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radii, spacing, typography } from '../theme';
 import { Button } from '../components/Button';
 import { ManualLogModal } from '../components/ManualLogModal';
@@ -8,11 +8,13 @@ import {
   formatPace, formatPaceShort, formatDistance, totalDistance,
 } from '../utils/pace';
 import { formatTimeLoose, relativeDate } from '../utils/time';
+import type { Run } from '../types';
 
 export const HistoryScreen: React.FC = () => {
   const runs = history.use();
   const s = settings.use();
-  const [manualOpen, setManualOpen] = useState(false);
+  const [editing, setEditing] = useState<Run | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const totalKm = runs.reduce((acc, r) => acc + r.distanceKm, 0);
   const avgPace = runs.length
@@ -45,7 +47,11 @@ export const HistoryScreen: React.FC = () => {
               ? `${r.weekLabel ? r.weekLabel + ' · ' : ''}${r.title}`
               : r.weekLabel || (r.source === 'manual' ? 'Manual run' : 'Run');
             return (
-              <View key={r.id} style={styles.row}>
+              <Pressable
+                key={r.id}
+                onPress={() => setEditing(r)}
+                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+              >
                 <View style={styles.rowTop}>
                   <Text style={styles.rowLabel}>{label}</Text>
                   <Text style={styles.rowPace}>{formatPace(r.paceSecondsPerKm, s.units)}</Text>
@@ -53,7 +59,7 @@ export const HistoryScreen: React.FC = () => {
                 <Text style={styles.rowSub}>
                   {formatDistance(r.distanceKm, s.units)} · {formatTimeLoose(r.durationSeconds)} · {relativeDate(r.date)}
                 </Text>
-              </View>
+              </Pressable>
             );
           })}
         </View>
@@ -62,12 +68,17 @@ export const HistoryScreen: React.FC = () => {
       <Button
         label="+ Log run manually"
         variant="secondary"
-        onPress={() => setManualOpen(true)}
+        onPress={() => setCreating(true)}
         block
         style={{ marginTop: spacing.md }}
       />
 
-      <ManualLogModal visible={manualOpen} onClose={() => setManualOpen(false)} />
+      <ManualLogModal visible={creating} onClose={() => setCreating(false)} />
+      <ManualLogModal
+        visible={!!editing}
+        existingRun={editing}
+        onClose={() => setEditing(null)}
+      />
     </ScrollView>
   );
 };
@@ -104,6 +115,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md, borderWidth: 1, borderColor: colors.bgSubtle,
     padding: spacing.md, gap: 4,
   },
+  rowPressed: { opacity: 0.6 },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   rowLabel: { ...typography.bodyStrong, color: colors.textPrimary, flex: 1, marginRight: spacing.sm },
   rowPace: { ...typography.bodyStrong, color: colors.run, fontVariant: ['tabular-nums'] },

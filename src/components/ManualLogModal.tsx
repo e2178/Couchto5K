@@ -1,33 +1,54 @@
-import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Alert, Modal, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, radii, spacing, typography } from '../theme';
 import { Button } from './Button';
-import { addRun } from '../store';
+import { addRun, deleteRun, updateRun } from '../store';
 import { computePace } from '../utils/pace';
+import type { Run } from '../types';
 
 type Props = {
   visible: boolean;
+  /* If provided, the modal switches to "edit" mode for this run. */
+  existingRun?: Run | null;
   onClose: () => void;
 };
 
-export const ManualLogModal: React.FC<Props> = ({ visible, onClose }) => {
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+const todayIso = (): string => new Date().toISOString().slice(0, 10);
+
+const minutesOf = (durationSeconds: number): string =>
+  String(Math.floor(durationSeconds / 60));
+
+const secondsOf = (durationSeconds: number): string =>
+  String(Math.round(durationSeconds % 60));
+
+export const ManualLogModal: React.FC<Props> = ({ visible, existingRun, onClose }) => {
+  const isEdit = !!existingRun;
+
+  const [date, setDate] = useState(todayIso());
   const [label, setLabel] = useState('');
   const [distance, setDistance] = useState('');
   const [minutes, setMinutes] = useState('');
   const [seconds, setSeconds] = useState('');
   const [error, setError] = useState('');
 
-  const reset = () => {
-    setDate(new Date().toISOString().slice(0, 10));
-    setLabel('');
-    setDistance('');
-    setMinutes('');
-    setSeconds('');
+  /* Sync form fields when the modal opens or when the run changes. */
+  useEffect(() => {
+    if (!visible) return;
+    if (existingRun) {
+      setDate(existingRun.date.slice(0, 10));
+      setLabel(existingRun.weekLabel ?? '');
+      setDistance(String(existingRun.distanceKm));
+      setMinutes(minutesOf(existingRun.durationSeconds));
+      setSeconds(secondsOf(existingRun.durationSeconds));
+    } else {
+      setDate(todayIso());
+      setLabel('');
+      setDistance('');
+      setMinutes('');
+      setSeconds('');
+    }
     setError('');
-  };
-
-  const handleClose = () => { reset(); onClose(); };
+  }, [visible, existingRun]);
 
   const handleSave = () => {
     const km = parseFloat(distance.replace(',', '.'));
@@ -44,37 +65,59 @@ export const ManualLogModal: React.FC<Props> = ({ visible, onClose }) => {
     } catch {
       iso = new Date().toISOString();
     }
-    addRun({
-      id: Date.now().toString(36),
-      date: iso,
-      weekLabel: label.trim() || undefined,
-      distanceKm: km,
-      durationSeconds: duration,
-      paceSecondsPerKm: computePace(duration, km),
-      source: 'manual',
-    });
-    handleClose();
+
+    if (existingRun) {
+      updateRun(existingRun.id, {
+        date: iso,
+        weekLabel: label.trim() || undefined,
+        distanceKm: km,
+        durationSeconds: duration,
+        paceSecondsPerKm: computePace(duration, km),
+      });
+    } else {
+      addRun({
+        id: Date.now().toString(36),
+        date: iso,
+        weekLabel: label.trim() || undefined,
+        distanceKm: km,
+        durationSeconds: duration,
+        paceSecondsPerKm: computePace(duration, km),
+        source: 'manual',
+      });
+    }
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (!existingRun) return;
+    Alert.alert('Delete run?', 'This permanently removes the run from history.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => { deleteRun(existingRun.id); onClose(); },
+      },
+    ]);
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <Text style={styles.title}>Log a run</Text>
+          <Text style={styles.title}>{isEdit ? 'Edit run' : 'Log a run'}</Text>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
+          <Field label="Date (YYYY-MM-DD)">
             <TextInput
               value={date}
               onChangeText={setDate}
               style={styles.input}
               placeholder="2026-04-26"
               placeholderTextColor={colors.textTertiary}
+              autoCapitalize="none"
             />
-          </View>
+          </Field>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Label (optional)</Text>
+          <Field label="Label (optional)">
             <TextInput
               value={label}
               onChangeText={setLabel}
@@ -82,10 +125,9 @@ export const ManualLogModal: React.FC<Props> = ({ visible, onClose }) => {
               placeholder="e.g. lunchtime jog"
               placeholderTextColor={colors.textTertiary}
             />
-          </View>
+          </Field>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Distance (km)</Text>
+          <Field label="Distance (km)">
             <TextInput
               value={distance}
               onChangeText={(v) => { setDistance(v); setError(''); }}
@@ -94,10 +136,9 @@ export const ManualLogModal: React.FC<Props> = ({ visible, onClose }) => {
               placeholderTextColor={colors.textTertiary}
               style={styles.input}
             />
-          </View>
+          </Field>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Duration</Text>
+          <Field label="Duration">
             <View style={styles.durationRow}>
               <TextInput
                 value={minutes}
@@ -118,19 +159,30 @@ export const ManualLogModal: React.FC<Props> = ({ visible, onClose }) => {
               />
               <Text style={styles.durationSep}>sec</Text>
             </View>
-          </View>
+          </Field>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <View style={styles.actions}>
-            <Button label="Cancel" variant="secondary" onPress={handleClose} block style={{ flex: 1 }} />
-            <Button label="Save"   variant="primary"   onPress={handleSave}  block style={{ flex: 1 }} />
+            <Button label="Cancel" variant="secondary" onPress={onClose} block style={{ flex: 1 }} />
+            <Button label="Save"   variant="primary"   onPress={handleSave} block style={{ flex: 1 }} />
           </View>
+
+          {isEdit ? (
+            <Button label="Delete run" variant="danger" onPress={handleDelete} block />
+          ) : null}
         </View>
       </View>
     </Modal>
   );
 };
+
+const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <View style={styles.field}>
+    <Text style={styles.label}>{label}</Text>
+    {children}
+  </View>
+);
 
 const styles = StyleSheet.create({
   overlay: {

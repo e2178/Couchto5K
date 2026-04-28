@@ -76,6 +76,12 @@ export const SettingsScreen: React.FC = () => {
         </Row>
       </Section>
 
+      <Section title="During workout">
+        <Row label="Keep screen on" sub="Prevent the display from sleeping while a run is in progress">
+          <Toggle value={s.keepScreenOn} onChange={(keepScreenOn) => updateSettings({ keepScreenOn })} />
+        </Row>
+      </Section>
+
       <Section title="History">
         <Row label="Auto-log completed runs" sub="Prompt for distance after each session">
           <Toggle value={s.autoLogEnabled} onChange={(autoLogEnabled) => updateSettings({ autoLogEnabled })} />

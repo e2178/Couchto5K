@@ -43,6 +43,15 @@ export type Settings = {
   vibrationEnabled: boolean;
   units: 'km' | 'mi';
   autoLogEnabled: boolean;
+  keepScreenOn: boolean;
   restDayReminders: boolean;
   restDayReminderTime: string;
+};
+
+export type ActiveWorkout = {
+  ctx: SessionContext;
+  startedAt: number;            // epoch ms
+  pausedAt: number | null;      // epoch ms when last paused, null if running
+  totalPausedMs: number;        // accumulated pause time
+  finishedAt: number | null;    // epoch ms when finished (early or natural)
 };
